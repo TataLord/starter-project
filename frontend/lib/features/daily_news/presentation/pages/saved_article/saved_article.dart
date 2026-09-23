@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:ionicons/ionicons.dart';
 import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
@@ -25,15 +24,17 @@ class SavedArticles extends HookWidget {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    // No back button: this is a root tab of the shell now, not a page pushed
+    // on top of the news feed.
     return AppBar(
-      leading: Builder(
-        builder: (context) => GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => _onBackButtonTapped(context),
-          child: const Icon(Ionicons.chevron_back, color: Colors.black),
+      titleSpacing: 20,
+      toolbarHeight: 72,
+      title: Builder(
+        builder: (context) => Text(
+          'Saved Articles',
+          style: Theme.of(context).textTheme.displayLarge,
         ),
       ),
-      title: const Text('Saved Articles', style: TextStyle(color: Colors.black)),
     );
   }
 
@@ -70,10 +71,6 @@ class SavedArticles extends HookWidget {
         );
       },
     );
-  }
-
-  void _onBackButtonTapped(BuildContext context) {
-    Navigator.pop(context);
   }
 
   void _onRemoveArticle(BuildContext context, ArticleEntity article) {

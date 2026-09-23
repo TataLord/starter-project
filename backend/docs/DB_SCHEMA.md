@@ -18,7 +18,8 @@ Stores news articles from both the existing API and those uploaded by journalist
   "publishedAt": "timestamp",        
   "createdAt": "timestamp",          
   "updatedAt": "timestamp",          
-  "status": "string"                 
+  "status": "string",
+  "viewCount": "number"
 }
 ```
 
@@ -33,25 +34,49 @@ Stores news articles from both the existing API and those uploaded by journalist
 | `author` | string | ✅ | Author/journalist name |
 | `userId` | string | ✅ | Firebase user ID (for permissions and audit) |
 | `thumbnailURL` | string | ✅ | Cloud Storage image path |
-| `publishedAt` | timestamp | ✅ | Publication date |
+| `publishedAt` | timestamp \| null | ⚠️ | Publication date. `null` while the article is a draft, required once `status` is `"published"` — enforced by `firestore.rules` |
 | `createdAt` | timestamp | ✅ | Document creation date |
 | `updatedAt` | timestamp | ✅ | Last update date |
 | `status` | string | ✅ | Status: "draft" or "published" |
+| `viewCount` | number | ❌ | Times a reader has opened the article. Defaults to `0`. Not yet enforced by `firestore.rules` — see `docs/DECISIONS.md` decision #25 |
 
 ### Indexes
 
-To optimize frequent queries:
+Declared in `firestore.indexes.json`, one per query the app actually issues:
 
-- **Composite Index**: `userId`, `status`, `createdAt` (descending)
-  - Use case: fetch user articles filtered by status and date
+| Fields | Query it serves |
+|--------|-----------------|
+| `userId`, `updatedAt` ↓ | "My articles", most recently edited first |
+| `userId`, `status`, `updatedAt` ↓ | "My articles" filtered to drafts or to published |
+| `status`, `publishedAt` ↓ | Public community feed, most recently published first |
+| `status`, `userId`, `publishedAt` ↓ | "More from this author" |
+
+The public feed orders by `publishedAt` (when a reader got it) while the
+author's own list orders by `updatedAt` (when they last touched it); they are
+deliberately different orderings, which is why they need different indexes.
 
 ### Security Rules
 
 Security rules are defined in `firestore.rules` and ensure:
-- Authentication required
+- Authentication required to write; reading a published article needs no account
 - Users can only create articles with their own `userId`
 - Only the author can edit/delete their own article
 - Public read access to published articles (`status: "published"`)
+- The documented field limits (200/500 characters, `status` values, the
+  draft/published rule for `publishedAt`) are enforced, not just documented
+- `viewCount` starts at `0` and a non-author may only ever raise it by exactly
+  one, on an article that is already published
+
+## Authentication
+
+Identity is handled by Firebase Authentication (email and password), not by a
+Firestore collection: there is no `users` collection to keep in sync. An
+article's `userId` is the Firebase Auth `uid`, which is what `firestore.rules`
+compares `request.auth.uid` against.
+
+Password reset uses Firebase's built-in `sendPasswordResetEmail()`, so no
+reset codes are stored anywhere in this database (see `docs/DECISIONS.md`
+decision #32).
 
 ### Cloud Storage
 
