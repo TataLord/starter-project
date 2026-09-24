@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
+import 'package:news_app_clean_architecture/core/resources/network_failure.dart';
+import 'package:news_app_clean_architecture/core/resources/remote_exception.dart';
 
 import '../../domain/entities/article_failures.dart';
 import '../../domain/entities/article_status.dart';
@@ -11,8 +12,9 @@ import '../models/journalist_article_model.dart';
 /// Firestore implementation of [JournalistArticleRepository].
 ///
 /// It is the only place that knows both sides: it turns entities into models
-/// on the way down, and provider errors into the domain's own failures on the
-/// way back up.
+/// on the way down, and the data source's errors into the domain's own
+/// failures on the way back up. It never names Firestore itself — the service
+/// hands it a [RemoteException] carrying the provider's code (rule 1.2.4).
 class JournalistArticleRepositoryImpl implements JournalistArticleRepository {
   final FirestoreArticleService _articleService;
 
@@ -21,8 +23,8 @@ class JournalistArticleRepositoryImpl implements JournalistArticleRepository {
   @override
   Future<DataState<List<JournalistArticleEntity>>> getUserArticles({
     required String userId,
-    ArticleStatus ? status,
-    String ? searchQuery,
+    ArticleStatus? status,
+    String? searchQuery,
   }) {
     return _guard(() async {
       final articles = await _articleService.getUserArticles(
@@ -53,10 +55,11 @@ class JournalistArticleRepositoryImpl implements JournalistArticleRepository {
 
   @override
   Future<DataState<List<JournalistArticleEntity>>> getPublishedArticles({
-    int limit = 20,
-    String ? authorId,
-    String ? excludeArticleId,
-    String ? startAfterArticleId,
+    int limit = 10,
+    String? authorId,
+    String? excludeArticleId,
+    String? startAfterArticleId,
+    DateTime? publishedAfter,
   }) {
     return _guard(() async {
       final articles = await _articleService.getPublishedArticles(
@@ -64,6 +67,7 @@ class JournalistArticleRepositoryImpl implements JournalistArticleRepository {
         authorId: authorId,
         excludeArticleId: excludeArticleId,
         startAfterArticleId: startAfterArticleId,
+        publishedAfter: publishedAfter,
       );
 
       return _toEntities(articles);
@@ -113,6 +117,19 @@ class JournalistArticleRepositoryImpl implements JournalistArticleRepository {
   }
 
   @override
+  Future<DataState<int>> updateAuthorName({
+    required String userId,
+    required String authorName,
+  }) {
+    return _guard(
+      () => _articleService.updateAuthorName(
+        userId: userId,
+        authorName: authorName,
+      ),
+    );
+  }
+
+  @override
   Future<DataState<void>> deleteArticle(String articleId) {
     return _guard(
       () => _articleService.deleteArticle(articleId),
@@ -135,25 +152,46 @@ class JournalistArticleRepositoryImpl implements JournalistArticleRepository {
   /// screen spinning. Every caller gets an answer, even for something we did
   /// not anticipate.
   ///
-  /// [articleId] is given when the operation targets one document, so that
-  /// Firestore's `not-found` can be reported as the failure the domain
-  /// already has a name for.
+  /// [articleId] is given when the operation targets one document, so that the
+  /// provider's `not-found` can be reported as the failure the domain already
+  /// has a name for.
   Future<DataState<T>> _guard<T>(
     Future<T> Function() operation, {
-    String ? articleId,
+    String? articleId,
   }) async {
     try {
       return DataSuccess(await operation());
-    } on FirebaseException catch (error) {
-      return DataFailed(
-        articleId != null && error.code == 'not-found'
-            ? ArticleNotFoundException(articleId)
-            : error,
-      );
+    } on RemoteException catch (error) {
+      return DataFailed(_toDomainFailure(error, articleId: articleId));
     } catch (error) {
       return DataFailed(error);
     }
   }
+
+  /// Maps the provider's error code onto the failure the domain understands.
+  Object _toDomainFailure(RemoteException error, {String? articleId}) {
+    if (articleId != null && error.code == _notFoundCode) {
+      return ArticleNotFoundException(articleId);
+    }
+    // Told apart from every other failure because it is the one the
+    // journalist can act on: publishing in airplane mode used to report
+    // "something went wrong", which says nothing about what to try next.
+    if (_connectivityCodes.contains(error.code)) {
+      return const NetworkUnavailableException();
+    }
+
+    return error;
+  }
+
+  /// The provider's code for a document that is not there.
+  static const String _notFoundCode = 'not-found';
+
+  /// What Firestore and Cloud Storage call "I could not reach the server".
+  static const Set<String> _connectivityCodes = {
+    RemoteException.unavailableCode,
+    'deadline-exceeded',
+    'network-request-failed',
+  };
 
   List<JournalistArticleEntity> _toEntities(
     List<JournalistArticleModel> articles,

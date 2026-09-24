@@ -8,6 +8,7 @@ import 'package:news_app_clean_architecture/features/journalist_articles/present
 
 import '../../../../../helpers/article_fixtures.dart';
 import '../../../../../helpers/fake_journalist_article_repository.dart';
+import '../../../../../helpers/localized_app.dart';
 
 void main() {
   late FakeJournalistArticleRepository repository;
@@ -20,12 +21,15 @@ void main() {
 
   tearDown(() => cubit.close());
 
-  Future<void> pumpScreen(WidgetTester tester, {String title = 'Community Articles'}) {
+  Future<void> pumpScreen(WidgetTester tester,
+      {String title = 'Community Articles'}) {
     return tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: BlocProvider<ArticleFeedCubit>.value(
           value: cubit,
-          child: ArticleFeedScreen(title: title),
+          child: ArticleFeedScreen(titleOverride: title),
         ),
       ),
     );
@@ -42,13 +46,41 @@ void main() {
     expect(find.text('By ${publishableArticle().author}'), findsOneWidget);
   });
 
-  testWidgets('shows an empty message when there is nothing published yet',
-      (tester) async {
+  testWidgets(
+      'an empty community feed says the week was quiet, not that the '
+      'app is empty', (tester) async {
     await pumpScreen(tester);
     await cubit.loadFeed();
     await tester.pump();
 
-    expect(find.text('No published articles yet.'), findsOneWidget);
+    expect(find.text('Nothing new this week'), findsOneWidget);
+    expect(find.textContaining('last 7 days'), findsOneWidget);
+  });
+
+  testWidgets("an empty author feed says that author has published nothing",
+      (tester) async {
+    final authorCubit = ArticleFeedCubit(
+      GetPublishedArticlesUseCase(repository),
+      authorId: 'journalist-1',
+      onlyRecent: false,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
+        home: BlocProvider<ArticleFeedCubit>.value(
+          value: authorCubit,
+          child: const ArticleFeedScreen(),
+        ),
+      ),
+    );
+    await authorCubit.loadFeed();
+    await tester.pump();
+
+    expect(find.text('No articles yet'), findsOneWidget);
+
+    await authorCubit.close();
   });
 
   testWidgets(
@@ -71,6 +103,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: BlocProvider<ArticleFeedCubit>.value(
           value: pagedCubit,
           child: const ArticleFeedScreen(),
@@ -80,7 +114,10 @@ void main() {
     await pagedCubit.loadFeed();
     await tester.pump();
 
-    expect(find.widgetWithText(OutlinedButton, 'Load more'), findsOneWidget);
+    expect(
+      find.widgetWithText(OutlinedButton, 'Load more articles'),
+      findsOneWidget,
+    );
 
     await pagedCubit.close();
   });

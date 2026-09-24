@@ -15,8 +15,8 @@ void main() {
   });
 
   test('forwards the article id to the repository', () async {
-    final result =
-        await incrementViewCount(const IncrementArticleViewCountParams('article-1'));
+    final result = await incrementViewCount(
+        const IncrementArticleViewCountParams('article-1'));
 
     expect(result, isA<DataSuccess>());
     expect(repository.incrementViewCountCallCount, 1);

@@ -23,11 +23,17 @@ abstract class AuthRepository {
 
   Future<DataState<void>> signOut();
 
+  /// Changes the name readers see on this person's articles.
+  ///
+  /// Returns the account as it now stands, so whoever asked does not have to
+  /// guess what was stored.
+  Future<DataState<AppUserEntity>> updateDisplayName(String displayName);
+
   /// Whoever is signed in right now, or `null` when nobody is.
   ///
   /// Reading the app requires no account, so "nobody" is an ordinary answer
   /// here and not a failure.
-  Future<DataState<AppUserEntity ?>> getCurrentUser();
+  Future<DataState<AppUserEntity?>> getCurrentUser();
 
   /// Starts a password reset for [email].
   ///

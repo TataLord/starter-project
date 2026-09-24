@@ -27,6 +27,7 @@ class GetPublishedArticlesUseCase
       authorId: params.authorId,
       excludeArticleId: params.excludeArticleId,
       startAfterArticleId: params.startAfterArticleId,
+      publishedAfter: params.publishedAfter,
     );
   }
 }

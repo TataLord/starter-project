@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:news_app_clean_architecture/config/theme/design_tokens.dart';
+import 'package:news_app_clean_architecture/l10n/app_localizations.dart';
 
 import '../../domain/entities/article.dart';
 import 'article_timestamp.dart';
@@ -79,7 +80,7 @@ class LeadArticleCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Read More',
+                          AppLocalizations.of(context).readMore,
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: AppColors.accent,
                           ),
@@ -114,10 +115,15 @@ class CompactArticleCard extends StatelessWidget {
   final ArticleEntity article;
   final VoidCallback onTap;
 
+  /// An action for this row, such as removing it from the saved list. Rows
+  /// that only lead somewhere leave it out.
+  final Widget? trailing;
+
   const CompactArticleCard({
     super.key,
     required this.article,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -165,6 +171,7 @@ class CompactArticleCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (trailing != null) trailing!,
           ],
         ),
       ),
@@ -202,9 +209,9 @@ class _CardSurface extends StatelessWidget {
 /// with a missing or broken image, and a torn icon on a grey box looks like a
 /// bug rather than a design.
 class _ArticleImage extends StatelessWidget {
-  final String ? url;
+  final String? url;
   final double height;
-  final double ? width;
+  final double? width;
   final BorderRadius borderRadius;
 
   const _ArticleImage({

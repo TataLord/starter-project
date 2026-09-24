@@ -11,6 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.2
 
@@ -24,9 +26,11 @@ dependencies:
   get_it: ^7.6.0
   
   #dateFormat
-  intl: ^0.18.1
+  intl: ^0.20.2
 
   #Database
+  # Imported directly by the Floor database class and by its generated code.
+  sqflite: ^2.3.0
   floor: ^1.4.2
 
   #make request to api
@@ -48,18 +52,43 @@ dependencies:
 
   #chached image 
   cached_network_image: ^3.2.0
+  image_picker: ^1.2.3
+  flutter_image_compress: ^2.5.1
+  flutter_markdown_plus: ^1.0.12
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  # Generates the launcher icons for every density from one drawing, so the
+  # icon has a single source (assets/branding/app_icon.svg) instead of a
+  # folder of hand-exported PNGs that drift apart.
+  flutter_launcher_icons: ^0.14.1
   retrofit_generator: ^8.2.1
   floor_generator: ^1.4.2
   build_runner: ^2.4.13
   
 
+# The launcher icon, generated from the mark drawn in
+# assets/branding/app_icon.svg. `dart run flutter_launcher_icons` regenerates
+# every density after a change to it.
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/branding/app_icon.png
+  # Android 8+ crops the icon to the launcher's own shape and only guarantees
+  # the middle of it survives, so the bars are supplied on their own over a
+  # flat violet rather than as a pre-cropped tile.
+  adaptive_icon_background: "#7C3AED"
+  adaptive_icon_foreground: assets/branding/app_icon_foreground.png
+
 flutter:
 
   uses-material-design: true
+
+  # Generates AppLocalizations from lib/l10n/*.arb. This runs through the
+  # flutter tool rather than build_runner, which is why it works while code
+  # generation is otherwise blocked (see docs/DECISIONS.md decision #19).
+  generate: true
 
  
   fonts:

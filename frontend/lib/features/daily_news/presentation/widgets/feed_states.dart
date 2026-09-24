@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:news_app_clean_architecture/config/theme/design_tokens.dart';
+import 'package:news_app_clean_architecture/l10n/app_localizations.dart';
 
 /// Placeholder cards shaped like the articles that are coming.
 ///
@@ -79,7 +80,7 @@ class FeedEmptyMessage extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;
-  final Widget ? action;
+  final Widget? action;
 
   const FeedEmptyMessage({
     super.key,
@@ -166,7 +167,7 @@ class FeedErrorMessage extends StatelessWidget {
             Text(message, style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Check your connection and try again.',
+              AppLocalizations.of(context).checkConnection,
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -175,7 +176,7 @@ class FeedErrorMessage extends StatelessWidget {
               width: 200,
               child: FilledButton(
                 onPressed: onRetry,
-                child: const Text('Try again'),
+                child: Text(AppLocalizations.of(context).tryAgain),
               ),
             ),
           ],

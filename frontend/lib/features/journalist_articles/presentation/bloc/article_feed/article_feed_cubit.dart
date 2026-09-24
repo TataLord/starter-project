@@ -15,29 +15,34 @@ import 'article_feed_state.dart';
 class ArticleFeedCubit extends Cubit<ArticleFeedState> {
   final GetPublishedArticlesUseCase _getPublishedArticles;
 
-  final String ? authorId;
-  final String ? excludeArticleId;
+  final String? authorId;
+  final String? excludeArticleId;
 
   /// Number of articles requested per page. Configurable so tests can exercise
   /// pagination without needing dozens of fixture articles.
   final int pageSize;
 
+  /// Whether to show only what was published inside
+  /// [GetPublishedArticlesParams.feedWindow].
+  ///
+  /// True for the community feed, which answers "what is new". False when the
+  /// feed is scoped to one journalist: an author's page is their catalogue,
+  /// and their work should not disappear from it after a week.
+  final bool onlyRecent;
+
   ArticleFeedCubit(
     this._getPublishedArticles, {
     this.authorId,
     this.excludeArticleId,
-    this.pageSize = 20,
+    this.pageSize = 10,
+    this.onlyRecent = true,
   }) : super(const ArticleFeedState());
 
   /// Loads the first page, replacing whatever was shown before.
   Future<void> loadFeed() async {
     emit(state.copyWith(status: ArticleFeedStatus.loading, clearError: true));
 
-    final result = await _getPublishedArticles(GetPublishedArticlesParams(
-      limit: pageSize,
-      authorId: authorId,
-      excludeArticleId: excludeArticleId,
-    ));
+    final result = await _getPublishedArticles(_paramsFor(null));
 
     _emitPage(result, replace: true);
   }
@@ -50,15 +55,29 @@ class ArticleFeedCubit extends Cubit<ArticleFeedState> {
 
     emit(state.copyWith(status: ArticleFeedStatus.loadingMore));
 
-    final result = await _getPublishedArticles(GetPublishedArticlesParams(
+    final result = await _getPublishedArticles(
+      _paramsFor(state.articles.isEmpty ? null : state.articles.last.id),
+    );
+
+    _emitPage(result, replace: false);
+  }
+
+  GetPublishedArticlesParams _paramsFor(String? startAfterArticleId) {
+    if (onlyRecent) {
+      return GetPublishedArticlesParams.recent(
+        limit: pageSize,
+        authorId: authorId,
+        excludeArticleId: excludeArticleId,
+        startAfterArticleId: startAfterArticleId,
+      );
+    }
+
+    return GetPublishedArticlesParams(
       limit: pageSize,
       authorId: authorId,
       excludeArticleId: excludeArticleId,
-      startAfterArticleId:
-          state.articles.isEmpty ? null : state.articles.last.id,
-    ));
-
-    _emitPage(result, replace: false);
+      startAfterArticleId: startAfterArticleId,
+    );
   }
 
   void _emitPage(

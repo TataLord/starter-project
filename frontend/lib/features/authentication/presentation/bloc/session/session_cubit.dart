@@ -10,6 +10,8 @@ import '../../../domain/use_cases/get_current_user.dart';
 import '../../../domain/use_cases/sign_in.dart';
 import '../../../domain/use_cases/sign_out.dart';
 import '../../../domain/use_cases/sign_up.dart';
+import '../../../domain/params/update_display_name_params.dart';
+import '../../../domain/use_cases/update_display_name.dart';
 import 'session_state.dart';
 
 /// Owns the answer to "who is using the app".
@@ -23,19 +25,21 @@ class SessionCubit extends Cubit<SessionState> {
   final SignUpUseCase _signUp;
   final SignInUseCase _signIn;
   final SignOutUseCase _signOut;
+  final UpdateDisplayNameUseCase _updateDisplayName;
 
   SessionCubit(
     this._getCurrentUser,
     this._signUp,
     this._signIn,
     this._signOut,
+    this._updateDisplayName,
   ) : super(const SessionState());
 
   /// Looks up whether a session survived from a previous run.
   Future<void> loadSession() async {
     final result = await _getCurrentUser(const NoParams());
 
-    if (result is DataSuccess<AppUserEntity ?>) {
+    if (result is DataSuccess<AppUserEntity?>) {
       _emitSignedInOrOut(result.data);
       return;
     }
@@ -77,6 +81,21 @@ class SessionCubit extends Cubit<SessionState> {
     _emitAuthResult(result);
   }
 
+  /// Changes the name this person publishes under.
+  ///
+  /// Their articles keep the byline they were written with: the name is
+  /// copied onto each one when it is saved, so renaming does not rewrite
+  /// history. New writing carries the new name.
+  Future<void> updateDisplayName(String displayName) async {
+    emit(state.copyWith(status: SessionStatus.busy, clearError: true));
+
+    final result = await _updateDisplayName(
+      UpdateDisplayNameParams(displayName),
+    );
+
+    _emitAuthResult(result);
+  }
+
   Future<void> signOut() async {
     emit(state.copyWith(status: SessionStatus.busy, clearError: true));
 
@@ -90,6 +109,26 @@ class SessionCubit extends Cubit<SessionState> {
     _emitFailure(result.error);
   }
 
+  /// Drops the failure the last attempt left behind.
+  ///
+  /// The session is one object for the whole app, so the message it holds
+  /// outlives the screen that produced it: a rejected sign-up was still being
+  /// shown, word for word, on the sign-in screen the person moved to next.
+  /// Every screen that displays a session failure clears it on arrival, which
+  /// keeps a message on the screen where it means something.
+  void clearFailure() {
+    if (state.status != SessionStatus.failure) {
+      return;
+    }
+
+    emit(state.copyWith(
+      status:
+          state.isSignedIn ? SessionStatus.signedIn : SessionStatus.signedOut,
+      validationErrors: const [],
+      clearError: true,
+    ));
+  }
+
   void _emitAuthResult(DataState<AppUserEntity> result) {
     if (result is DataSuccess<AppUserEntity>) {
       _emitSignedInOrOut(result.data);
@@ -99,14 +138,14 @@ class SessionCubit extends Cubit<SessionState> {
     _emitFailure(result.error);
   }
 
-  void _emitSignedInOrOut(AppUserEntity ? user) {
+  void _emitSignedInOrOut(AppUserEntity? user) {
     emit(SessionState(
       status: user == null ? SessionStatus.signedOut : SessionStatus.signedIn,
       user: user,
     ));
   }
 
-  void _emitFailure(Object ? error) {
+  void _emitFailure(Object? error) {
     emit(state.copyWith(
       status: SessionStatus.failure,
       error: error,

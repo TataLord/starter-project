@@ -82,7 +82,8 @@ void main() {
   });
 
   test('propagates an address that is already registered', () async {
-    repository.signUpResult = const DataFailed(EmailAlreadyRegisteredException());
+    repository.signUpResult =
+        const DataFailed(EmailAlreadyRegisteredException());
 
     final result = await signUp(const SignUpParams(
       email: 'alex@example.com',

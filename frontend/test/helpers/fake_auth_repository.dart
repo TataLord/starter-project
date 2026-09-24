@@ -5,20 +5,23 @@ import 'package:news_app_clean_architecture/features/authentication/domain/repos
 /// Hand written test double for [AuthRepository], in the same style as
 /// [FakeJournalistArticleRepository].
 class FakeAuthRepository implements AuthRepository {
-  DataState<AppUserEntity> ? signUpResult;
-  DataState<AppUserEntity> ? signInResult;
+  DataState<AppUserEntity>? signUpResult;
+  DataState<AppUserEntity>? signInResult;
   DataState<void> signOutResult = const DataSuccess(null);
-  DataState<AppUserEntity ?> currentUserResult = const DataSuccess(null);
+  DataState<AppUserEntity?> currentUserResult = const DataSuccess(null);
   DataState<void> passwordResetResult = const DataSuccess(null);
 
   int signUpCallCount = 0;
   int signInCallCount = 0;
   int signOutCallCount = 0;
   int passwordResetCallCount = 0;
+  int updateDisplayNameCallCount = 0;
 
-  String ? lastEmail;
-  String ? lastPassword;
-  String ? lastDisplayName;
+  DataState<AppUserEntity>? updateDisplayNameResult;
+
+  String? lastEmail;
+  String? lastPassword;
+  String? lastDisplayName;
 
   static const AppUserEntity anyUser = AppUserEntity(
     id: 'journalist-1',
@@ -53,13 +56,22 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<DataState<AppUserEntity>> updateDisplayName(String displayName) async {
+    updateDisplayNameCallCount++;
+    lastDisplayName = displayName;
+
+    return updateDisplayNameResult ??
+        DataSuccess(anyUser.copyWith(displayName: displayName));
+  }
+
+  @override
   Future<DataState<void>> signOut() async {
     signOutCallCount++;
     return signOutResult;
   }
 
   @override
-  Future<DataState<AppUserEntity ?>> getCurrentUser() async {
+  Future<DataState<AppUserEntity?>> getCurrentUser() async {
     return currentUserResult;
   }
 

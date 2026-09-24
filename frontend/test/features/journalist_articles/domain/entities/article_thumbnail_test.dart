@@ -41,9 +41,18 @@ void main() {
 
     test('rejects a format the app does not support', () {
       expect(
-        thumbnail(fileName: 'cover.gif').validate(),
+        thumbnail(fileName: 'cover.bmp').validate(),
         contains(ThumbnailValidationError.unsupportedFormat),
       );
+    });
+
+    test('accepts a gif, so a cover can move', () {
+      expect(thumbnail(fileName: 'reaction.gif').validate(), isEmpty);
+      expect(thumbnail(fileName: 'reaction.gif').isAnimated, isTrue);
+    });
+
+    test('a still image is not animated', () {
+      expect(thumbnail(fileName: 'cover.jpg').isAnimated, isFalse);
     });
   });
 }

@@ -8,7 +8,7 @@ enum PasswordResetStatus { editing, sending, sent, failure }
 class PasswordResetState extends Equatable {
   final PasswordResetStatus status;
   final List<CredentialsValidationError> validationErrors;
-  final Object ? error;
+  final Object? error;
 
   const PasswordResetState({
     this.status = PasswordResetStatus.editing,
@@ -21,5 +21,5 @@ class PasswordResetState extends Equatable {
   bool get wasSent => status == PasswordResetStatus.sent;
 
   @override
-  List<Object ?> get props => [status, validationErrors, error];
+  List<Object?> get props => [status, validationErrors, error];
 }

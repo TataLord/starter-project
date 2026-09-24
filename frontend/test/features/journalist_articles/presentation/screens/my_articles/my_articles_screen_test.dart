@@ -10,6 +10,7 @@ import 'package:news_app_clean_architecture/features/journalist_articles/present
 
 import '../../../../../helpers/article_fixtures.dart';
 import '../../../../../helpers/fake_journalist_article_repository.dart';
+import '../../../../../helpers/localized_app.dart';
 
 void main() {
   late FakeJournalistArticleRepository repository;
@@ -30,6 +31,8 @@ void main() {
   Future<void> pumpScreen(WidgetTester tester) {
     return tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: BlocProvider<MyArticlesCubit>.value(
           value: cubit,
           child: const MyArticlesScreen(),
@@ -46,7 +49,7 @@ void main() {
     await tester.pump();
 
     expect(find.text(publishableArticle().title), findsOneWidget);
-    expect(find.text('Draft'), findsOneWidget);
+    expect(find.text('DRAFT'), findsOneWidget);
   });
 
   testWidgets('invites the journalist to write when there is nothing yet',
@@ -55,7 +58,7 @@ void main() {
     await cubit.loadArticles();
     await tester.pump();
 
-    expect(find.text('No articles yet. Write one!'), findsOneWidget);
+    expect(find.text('No articles yet'), findsOneWidget);
   });
 
   testWidgets('filters the list by status', (tester) async {
@@ -66,5 +69,17 @@ void main() {
     await tester.pump();
 
     expect(repository.lastStatusFilter, isNotNull);
+  });
+
+  testWidgets(
+      'paints its own background, so a pushed route is not a black void',
+      (tester) async {
+    await pumpScreen(tester);
+
+    // This screen is opened by pushing a route, where its Scaffold is the
+    // only surface there is. A transparent one shows the void behind the
+    // route the moment the page transition finishes.
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+    expect(scaffold.backgroundColor, isNot(Colors.transparent));
   });
 }

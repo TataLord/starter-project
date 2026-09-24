@@ -9,13 +9,13 @@ import '../repository/auth_repository.dart';
 /// A null result is the ordinary state of a reader who never made an account,
 /// not a failure.
 class GetCurrentUserUseCase
-    implements UseCase<DataState<AppUserEntity ?>, NoParams> {
+    implements UseCase<DataState<AppUserEntity?>, NoParams> {
   final AuthRepository _authRepository;
 
   const GetCurrentUserUseCase(this._authRepository);
 
   @override
-  Future<DataState<AppUserEntity ?>> call(NoParams params) {
+  Future<DataState<AppUserEntity?>> call(NoParams params) {
     return _authRepository.getCurrentUser();
   }
 }

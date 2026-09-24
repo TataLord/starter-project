@@ -39,6 +39,29 @@ void main() {
     expect(repository.lastPublishedArticlesExcludeArticleId, 'article-1');
   });
 
+  test('the community feed asks only for the last week', () async {
+    final cubit = ArticleFeedCubit(GetPublishedArticlesUseCase(repository));
+
+    await cubit.loadFeed();
+
+    expect(repository.lastPublishedAfter, isNotNull);
+    await cubit.close();
+  });
+
+  test("an author's own feed is not limited to the last week", () async {
+    // Their catalogue should not empty itself after seven days.
+    final cubit = ArticleFeedCubit(
+      GetPublishedArticlesUseCase(repository),
+      authorId: 'journalist-1',
+      onlyRecent: false,
+    );
+
+    await cubit.loadFeed();
+
+    expect(repository.lastPublishedAfter, isNull);
+    await cubit.close();
+  });
+
   test('reports a failure without crashing', () async {
     final cubit = ArticleFeedCubit(GetPublishedArticlesUseCase(repository));
     repository.publishedArticlesResult =

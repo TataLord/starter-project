@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:news_app_clean_architecture/core/resources/network_failure.dart';
+import 'package:news_app_clean_architecture/l10n/app_localizations.dart';
 
 import '../../domain/entities/article_failures.dart';
 
@@ -6,68 +8,79 @@ import '../../domain/entities/article_failures.dart';
 /// act on.
 ///
 /// The domain reports failures as values (enums and exceptions) and leaves the
-/// wording to the presentation layer, which is what this widget provides.
+/// wording — and now the language — to the presentation layer.
 class ArticleFailureText extends StatelessWidget {
-  final Object ? failure;
+  final Object? failure;
 
   const ArticleFailureText(this.failure, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      messageFor(failure),
+      messageFor(AppLocalizations.of(context), failure),
       style: TextStyle(color: Theme.of(context).colorScheme.error),
     );
   }
 
-  static String messageFor(Object ? failure) {
+  static String messageFor(AppLocalizations l10n, Object? failure) {
     if (failure is ArticleValidationException) {
-      return failure.errors.map(messageForValidationError).join('\n');
+      return failure.errors
+          .map((error) => messageForValidationError(l10n, error))
+          .join('\n');
     }
     if (failure is ThumbnailValidationException) {
-      return failure.errors.map(messageForThumbnailError).join('\n');
+      return failure.errors
+          .map((error) => messageForThumbnailError(l10n, error))
+          .join('\n');
     }
     if (failure is ArticleNotFoundException) {
-      return 'This article no longer exists.';
+      return l10n.errorArticleNotFound;
     }
     if (failure is ArticleNotStoredException) {
-      return 'Save the article before publishing it.';
+      return l10n.errorArticleNotStored;
     }
-    if (failure == null) {
-      return 'Something went wrong.';
+    if (failure is NetworkUnavailableException) {
+      return l10n.errorNoConnection;
     }
-    return 'Something went wrong: $failure';
+
+    return l10n.errorGeneric;
   }
 
-  static String messageForValidationError(ArticleValidationError error) {
+  static String messageForValidationError(
+    AppLocalizations l10n,
+    ArticleValidationError error,
+  ) {
     switch (error) {
       case ArticleValidationError.titleRequired:
-        return 'The article needs a title.';
+        return l10n.errorTitleRequired;
       case ArticleValidationError.titleTooLong:
-        return 'The title is too long.';
+        return l10n.errorTitleTooLong;
       case ArticleValidationError.descriptionRequired:
-        return 'Readers need a short description.';
+        return l10n.errorDescriptionRequired;
       case ArticleValidationError.descriptionTooLong:
-        return 'The description is too long.';
+        return l10n.errorDescriptionTooLong;
       case ArticleValidationError.contentRequired:
-        return 'The article has no content yet.';
+        return l10n.errorContentRequired;
       case ArticleValidationError.thumbnailRequired:
-        return 'Add a cover image before publishing.';
+        return l10n.errorThumbnailRequired;
       case ArticleValidationError.authorRequired:
-        return 'The article has no author.';
+        return l10n.errorAuthorRequired;
       case ArticleValidationError.userRequired:
-        return 'The article has no owner.';
+        return l10n.errorOwnerRequired;
     }
   }
 
-  static String messageForThumbnailError(ThumbnailValidationError error) {
+  static String messageForThumbnailError(
+    AppLocalizations l10n,
+    ThumbnailValidationError error,
+  ) {
     switch (error) {
       case ThumbnailValidationError.emptyFile:
-        return 'The selected image is empty.';
+        return l10n.errorImageEmpty;
       case ThumbnailValidationError.fileTooLarge:
-        return 'The image is larger than 5 MB.';
+        return l10n.errorImageTooLarge;
       case ThumbnailValidationError.unsupportedFormat:
-        return 'Only jpg, png and webp images are supported.';
+        return l10n.errorImageFormat;
     }
   }
 }

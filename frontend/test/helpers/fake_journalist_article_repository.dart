@@ -11,37 +11,42 @@ import 'package:news_app_clean_architecture/features/journalist_articles/domain/
 class FakeJournalistArticleRepository implements JournalistArticleRepository {
   DataState<List<JournalistArticleEntity>> userArticlesResult =
       const DataSuccess(<JournalistArticleEntity>[]);
-  DataState<JournalistArticleEntity> ? articleByIdResult;
-  DataState<JournalistArticleEntity> ? createResult;
-  DataState<JournalistArticleEntity> ? updateResult;
+  DataState<JournalistArticleEntity>? articleByIdResult;
+  DataState<JournalistArticleEntity>? createResult;
+  DataState<JournalistArticleEntity>? updateResult;
   DataState<void> deleteResult = const DataSuccess(null);
   DataState<List<JournalistArticleEntity>> publishedArticlesResult =
       const DataSuccess(<JournalistArticleEntity>[]);
   DataState<void> incrementViewCountResult = const DataSuccess(null);
+  DataState<int>? updateAuthorNameResult;
 
   int createCallCount = 0;
   int updateCallCount = 0;
   int deleteCallCount = 0;
   int incrementViewCountCallCount = 0;
+  int updateAuthorNameCallCount = 0;
 
-  JournalistArticleEntity ? lastCreatedArticle;
-  JournalistArticleEntity ? lastUpdatedArticle;
-  String ? lastRequestedArticleId;
-  String ? lastDeletedArticleId;
-  String ? lastViewedArticleId;
-  String ? lastUserId;
-  ArticleStatus ? lastStatusFilter;
-  String ? lastSearchQuery;
-  int ? lastPublishedArticlesLimit;
-  String ? lastPublishedArticlesAuthorId;
-  String ? lastPublishedArticlesExcludeArticleId;
-  String ? lastPublishedArticlesStartAfterArticleId;
+  JournalistArticleEntity? lastCreatedArticle;
+  JournalistArticleEntity? lastUpdatedArticle;
+  String? lastRequestedArticleId;
+  String? lastDeletedArticleId;
+  String? lastViewedArticleId;
+  String? lastUserId;
+  ArticleStatus? lastStatusFilter;
+  String? lastSearchQuery;
+  int? lastPublishedArticlesLimit;
+  String? lastPublishedArticlesAuthorId;
+  String? lastPublishedArticlesExcludeArticleId;
+  String? lastPublishedArticlesStartAfterArticleId;
+  DateTime? lastPublishedAfter;
+  String? lastRenamedUserId;
+  String? lastAuthorName;
 
   @override
   Future<DataState<List<JournalistArticleEntity>>> getUserArticles({
     required String userId,
-    ArticleStatus ? status,
-    String ? searchQuery,
+    ArticleStatus? status,
+    String? searchQuery,
   }) async {
     lastUserId = userId;
     lastStatusFilter = status;
@@ -58,13 +63,25 @@ class FakeJournalistArticleRepository implements JournalistArticleRepository {
         const DataSuccess(JournalistArticleEntity(id: 'unset'));
   }
 
+  /// Mirrors `JournalistArticleRepositoryImpl`, which stamps the timestamps
+  /// the backend owns before storing and hands the stored article back. A
+  /// fake that skipped them would let a screen that reads `updatedAt` pass
+  /// its tests and fail in the app.
   @override
   Future<DataState<JournalistArticleEntity>> createArticle(
     JournalistArticleEntity article,
   ) async {
     createCallCount++;
     lastCreatedArticle = article;
-    return createResult ?? DataSuccess(article.copyWith(id: 'created-id'));
+
+    final now = DateTime.now();
+
+    return createResult ??
+        DataSuccess(article.copyWith(
+          id: 'created-id',
+          createdAt: article.createdAt ?? now,
+          updatedAt: now,
+        ));
   }
 
   @override
@@ -73,7 +90,9 @@ class FakeJournalistArticleRepository implements JournalistArticleRepository {
   ) async {
     updateCallCount++;
     lastUpdatedArticle = article;
-    return updateResult ?? DataSuccess(article);
+
+    return updateResult ??
+        DataSuccess(article.copyWith(updatedAt: DateTime.now()));
   }
 
   @override
@@ -85,16 +104,30 @@ class FakeJournalistArticleRepository implements JournalistArticleRepository {
 
   @override
   Future<DataState<List<JournalistArticleEntity>>> getPublishedArticles({
-    int limit = 20,
-    String ? authorId,
-    String ? excludeArticleId,
-    String ? startAfterArticleId,
+    int limit = 10,
+    String? authorId,
+    String? excludeArticleId,
+    String? startAfterArticleId,
+    DateTime? publishedAfter,
   }) async {
     lastPublishedArticlesLimit = limit;
     lastPublishedArticlesAuthorId = authorId;
     lastPublishedArticlesExcludeArticleId = excludeArticleId;
     lastPublishedArticlesStartAfterArticleId = startAfterArticleId;
+    lastPublishedAfter = publishedAfter;
     return publishedArticlesResult;
+  }
+
+  @override
+  Future<DataState<int>> updateAuthorName({
+    required String userId,
+    required String authorName,
+  }) async {
+    updateAuthorNameCallCount++;
+    lastRenamedUserId = userId;
+    lastAuthorName = authorName;
+
+    return updateAuthorNameResult ?? const DataSuccess(0);
   }
 
   @override

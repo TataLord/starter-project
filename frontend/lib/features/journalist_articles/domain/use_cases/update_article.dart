@@ -11,7 +11,8 @@ import '../repository/journalist_article_repository.dart';
 /// The article keeps its current status, so editing a published article is
 /// validated with the stricter publishing rules.
 class UpdateArticleUseCase
-    implements UseCase<DataState<JournalistArticleEntity>, UpdateArticleParams> {
+    implements
+        UseCase<DataState<JournalistArticleEntity>, UpdateArticleParams> {
   final JournalistArticleRepository _articleRepository;
 
   const UpdateArticleUseCase(this._articleRepository);

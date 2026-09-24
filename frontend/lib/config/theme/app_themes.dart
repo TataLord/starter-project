@@ -163,6 +163,21 @@ ThemeData _themeFor(Brightness brightness) {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.sheet),
       ),
+      // Both styles are set on purpose. Material's default dialog title is
+      // `headlineSmall`, which in this type scale is the serif used for
+      // headlines — so a dialog came out with a serif question above sans
+      // serif text. A dialog is interface, not editorial, and reads as one
+      // voice only when the whole of it is Inter.
+      titleTextStyle: _inter(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: text,
+      ),
+      contentTextStyle: _inter(
+        fontSize: 15,
+        color: textMuted,
+        height: 1.5,
+      ),
     ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: surface,
@@ -190,9 +205,9 @@ ThemeData _themeFor(Brightness brightness) {
 TextStyle _inter({
   required double fontSize,
   FontWeight fontWeight = FontWeight.w400,
-  Color ? color,
-  double ? height,
-  double ? letterSpacing,
+  Color? color,
+  double? height,
+  double? letterSpacing,
 }) {
   return TextStyle(
     fontFamily: 'Inter',
@@ -212,8 +227,8 @@ TextStyle _inter({
 TextStyle _serif({
   required double fontSize,
   FontWeight fontWeight = FontWeight.w400,
-  Color ? color,
-  double ? height,
+  Color? color,
+  double? height,
 }) {
   return TextStyle(
     fontFamily: 'InstrumentSerif',
@@ -224,7 +239,9 @@ TextStyle _serif({
   );
 }
 
-double _axisValueOf(FontWeight weight) => (weight.index + 1) * 100;
+/// The `wght` axis value a variable font expects, which is exactly what
+/// [FontWeight.value] already is (400 for regular, 600 for semibold).
+double _axisValueOf(FontWeight weight) => weight.value.toDouble();
 
 /// The type scale of `docs/FRONTEND_DESIGN.md`.
 TextTheme _textTheme(Color text, Color textMuted) {

@@ -149,6 +149,23 @@ void main() {
       expect(result.data, isEmpty);
     });
 
+    test('leaves out anything published before the window', () async {
+      final result = await repository.getPublishedArticles(
+        publishedAfter: DateTime(2026, 9, 19),
+      );
+
+      // a-1 went public on the 18th, a day before the window opens.
+      expect(result.data, isEmpty);
+    });
+
+    test('keeps what was published inside the window', () async {
+      final result = await repository.getPublishedArticles(
+        publishedAfter: DateTime(2026, 9, 17),
+      );
+
+      expect(result.data?.map((a) => a.id).toList(), ['a-1']);
+    });
+
     test('pages results after the given cursor', () async {
       final extraPublished = publishableArticle(
         id: 'a-4',
@@ -161,8 +178,7 @@ void main() {
         initialArticles: [...storedArticles, extraPublished],
       );
 
-      final firstPage =
-          await repository.getPublishedArticles(limit: 1);
+      final firstPage = await repository.getPublishedArticles(limit: 1);
       expect(firstPage.data?.map((a) => a.id).toList(), ['a-1']);
 
       final secondPage = await repository.getPublishedArticles(

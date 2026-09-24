@@ -12,9 +12,9 @@ class PublishArticleParams extends Equatable {
   final JournalistArticleEntity article;
   final DateTime publishedAt;
 
-  PublishArticleParams(this.article, {DateTime ? publishedAt})
+  PublishArticleParams(this.article, {DateTime? publishedAt})
       : publishedAt = publishedAt ?? DateTime.now();
 
   @override
-  List<Object ?> get props => [article, publishedAt];
+  List<Object?> get props => [article, publishedAt];
 }

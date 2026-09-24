@@ -7,8 +7,8 @@ class FakeArticleThumbnailRepository implements ArticleThumbnailRepository {
   DataState<String> uploadResult = const DataSuccess('https://mock/upload.jpg');
 
   int uploadCallCount = 0;
-  String ? lastUserId;
-  ArticleThumbnailEntity ? lastThumbnail;
+  String? lastUserId;
+  ArticleThumbnailEntity? lastThumbnail;
 
   @override
   Future<DataState<String>> uploadThumbnail({

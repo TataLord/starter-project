@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/relative_time.dart';
+import 'package:news_app_clean_architecture/l10n/app_localizations.dart';
 
 /// Shows when an article was published, the way a reader thinks about it.
 ///
@@ -10,47 +11,23 @@ import 'package:intl/intl.dart';
 /// The News API hands `publishedAt` over as a string, so parsing failures are
 /// a real case and are handled by showing nothing rather than a broken date.
 class ArticleTimestamp extends StatelessWidget {
-  final String ? rawDate;
-  final TextStyle ? style;
+  final String? rawDate;
+  final TextStyle? style;
 
   const ArticleTimestamp({super.key, required this.rawDate, this.style});
 
   @override
   Widget build(BuildContext context) {
-    final label = format(rawDate);
+    final label = RelativeTime.formatRaw(
+      AppLocalizations.of(context),
+      rawDate,
+    );
 
     if (label.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Text(label, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
-  }
-
-  static String format(String ? rawDate, {DateTime ? now}) {
-    if (rawDate == null || rawDate.isEmpty) {
-      return '';
-    }
-
-    final published = DateTime.tryParse(rawDate);
-    if (published == null) {
-      return '';
-    }
-
-    final elapsed = (now ?? DateTime.now()).difference(published);
-
-    if (elapsed.inMinutes < 1) {
-      return 'Just now';
-    }
-    if (elapsed.inHours < 1) {
-      return '${elapsed.inMinutes}m ago';
-    }
-    if (elapsed.inHours < 24) {
-      return '${elapsed.inHours}h ago';
-    }
-    if (elapsed.inDays < 7) {
-      return '${elapsed.inDays}d ago';
-    }
-
-    return DateFormat('MMM d, y').format(published);
+    return Text(label,
+        style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
   }
 }

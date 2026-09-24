@@ -12,7 +12,8 @@ import '../repository/journalist_article_repository.dart';
 /// published must already be complete: the rules live in the entity and are
 /// applied here before reaching the repository.
 class CreateArticleUseCase
-    implements UseCase<DataState<JournalistArticleEntity>, CreateArticleParams> {
+    implements
+        UseCase<DataState<JournalistArticleEntity>, CreateArticleParams> {
   final JournalistArticleRepository _articleRepository;
 
   const CreateArticleUseCase(this._articleRepository);

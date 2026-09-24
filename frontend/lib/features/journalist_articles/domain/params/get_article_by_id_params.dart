@@ -7,5 +7,5 @@ class GetArticleByIdParams extends Equatable {
   const GetArticleByIdParams(this.articleId);
 
   @override
-  List<Object ?> get props => [articleId];
+  List<Object?> get props => [articleId];
 }

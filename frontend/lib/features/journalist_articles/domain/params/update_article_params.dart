@@ -10,5 +10,5 @@ class UpdateArticleParams extends Equatable {
   const UpdateArticleParams(this.article);
 
   @override
-  List<Object ?> get props => [article];
+  List<Object?> get props => [article];
 }

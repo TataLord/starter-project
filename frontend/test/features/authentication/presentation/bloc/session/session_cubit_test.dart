@@ -5,6 +5,7 @@ import 'package:news_app_clean_architecture/features/authentication/domain/use_c
 import 'package:news_app_clean_architecture/features/authentication/domain/use_cases/sign_in.dart';
 import 'package:news_app_clean_architecture/features/authentication/domain/use_cases/sign_out.dart';
 import 'package:news_app_clean_architecture/features/authentication/domain/use_cases/sign_up.dart';
+import 'package:news_app_clean_architecture/features/authentication/domain/use_cases/update_display_name.dart';
 import 'package:news_app_clean_architecture/features/authentication/presentation/bloc/session/session_cubit.dart';
 import 'package:news_app_clean_architecture/features/authentication/presentation/bloc/session/session_state.dart';
 
@@ -21,6 +22,7 @@ void main() {
       SignUpUseCase(repository),
       SignInUseCase(repository),
       SignOutUseCase(repository),
+      UpdateDisplayNameUseCase(repository),
     );
   });
 
@@ -58,8 +60,7 @@ void main() {
     expect(cubit.state.user, FakeAuthRepository.anyUser);
   });
 
-  test('reports the rules the credentials break, staying signed out',
-      () async {
+  test('reports the rules the credentials break, staying signed out', () async {
     await cubit.signUp(
       email: 'alex@example.com',
       password: 'short',
@@ -82,5 +83,48 @@ void main() {
 
     expect(cubit.state.status, SessionStatus.signedOut);
     expect(cubit.state.user, isNull);
+  });
+
+  /// The session is one object for the whole app, so the failure it holds
+  /// outlives the screen that produced it: a rejected sign-up was still being
+  /// shown, word for word, on the sign-in screen the person moved to next.
+  group('clearFailure', () {
+    test('drops the message the last attempt left behind', () async {
+      repository.signInResult = const DataFailed(InvalidCredentialsException());
+      await cubit.signIn(email: 'alex@example.com', password: 'wrong');
+      expect(cubit.state.status, SessionStatus.failure);
+
+      cubit.clearFailure();
+
+      expect(cubit.state.status, SessionStatus.signedOut);
+      expect(cubit.state.error, isNull);
+      expect(cubit.state.validationErrors, isEmpty);
+    });
+
+    test('leaves somebody who is signed in signed in', () async {
+      repository.signInResult = const DataSuccess(FakeAuthRepository.anyUser);
+      await cubit.signIn(email: 'alex@example.com', password: 'correct horse');
+
+      repository.updateDisplayNameResult =
+          const DataFailed(InvalidCredentialsException());
+      await cubit.updateDisplayName('');
+      expect(cubit.state.status, SessionStatus.failure);
+
+      cubit.clearFailure();
+
+      // Clearing a message must not sign anybody out.
+      expect(cubit.state.status, SessionStatus.signedIn);
+      expect(cubit.state.isSignedIn, isTrue);
+      expect(cubit.state.user, isNotNull);
+    });
+
+    test('does nothing when there is nothing to clear', () async {
+      await cubit.loadSession();
+      final before = cubit.state;
+
+      cubit.clearFailure();
+
+      expect(cubit.state, before);
+    });
   });
 }

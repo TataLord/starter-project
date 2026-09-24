@@ -18,7 +18,7 @@ class JournalistArticleEntity extends Equatable {
 
   /// Identifier of the stored article. It is `null` until the article has been
   /// persisted for the first time.
-  final String ? id;
+  final String? id;
   final String title;
   final String description;
   final String content;
@@ -34,9 +34,9 @@ class JournalistArticleEntity extends Equatable {
 
   /// Timestamps owned by the backend: they are `null` for an article that has
   /// not been stored yet.
-  final DateTime ? publishedAt;
-  final DateTime ? createdAt;
-  final DateTime ? updatedAt;
+  final DateTime? publishedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const JournalistArticleEntity({
     this.id,
@@ -62,6 +62,25 @@ class JournalistArticleEntity extends Equatable {
 
   /// Whether the article satisfies every rule required to be made public.
   bool get canBePublished => validateForPublishing().isEmpty;
+
+  /// Whether this article is one of the results for [query].
+  ///
+  /// The rule lives here rather than where the searching happens: what counts
+  /// as a match is a statement about an article, and the data source only
+  /// filters in memory because Firestore has no substring search to delegate
+  /// it to. An empty query matches everything, which is what "no filter"
+  /// means to a reader.
+  bool matches(String query) {
+    final terms = query.trim().toLowerCase();
+
+    if (terms.isEmpty) {
+      return true;
+    }
+
+    return title.toLowerCase().contains(terms) ||
+        description.toLowerCase().contains(terms) ||
+        content.toLowerCase().contains(terms);
+  }
 
   /// Validates the article against the rules of its current [status].
   ///
@@ -141,22 +160,22 @@ class JournalistArticleEntity extends Equatable {
   }
 
   JournalistArticleEntity copyWith({
-    String ? id,
-    String ? title,
-    String ? description,
-    String ? content,
-    String ? author,
-    String ? userId,
-    String ? thumbnailUrl,
-    ArticleStatus ? status,
-    int ? viewCount,
-    DateTime ? publishedAt,
+    String? id,
+    String? title,
+    String? description,
+    String? content,
+    String? author,
+    String? userId,
+    String? thumbnailUrl,
+    ArticleStatus? status,
+    int? viewCount,
+    DateTime? publishedAt,
 
     /// Drops the publication date, which [publishedAt] cannot do on its own:
     /// passing null there means "leave it alone".
     bool clearPublishedAt = false,
-    DateTime ? createdAt,
-    DateTime ? updatedAt,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return JournalistArticleEntity(
       id: id ?? this.id,
@@ -177,7 +196,7 @@ class JournalistArticleEntity extends Equatable {
   static bool _isBlank(String value) => value.trim().isEmpty;
 
   @override
-  List<Object ?> get props {
+  List<Object?> get props {
     return [
       id,
       title,

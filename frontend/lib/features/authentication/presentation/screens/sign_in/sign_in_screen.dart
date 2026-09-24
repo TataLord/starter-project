@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:news_app_clean_architecture/config/theme/design_tokens.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/widgets/alert_banner.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/widgets/app_brand.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/widgets/centered_form.dart';
+import 'package:news_app_clean_architecture/l10n/app_localizations.dart';
 
 import '../../bloc/session/session_cubit.dart';
 import '../../bloc/session/session_state.dart';
@@ -22,6 +27,15 @@ class _SignInScreenState extends State<SignInScreen> {
   final _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // The session is app wide, so a failure from the screen before this one
+    // would otherwise be sitting here, describing something that happened
+    // somewhere else.
+    context.read<SessionCubit>().clearFailure();
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -31,7 +45,9 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
+      // No title: the screen introduces itself below, and an app bar
+      // repeating "Sign in" over a button that says "Sign in" is furniture.
+      appBar: AppBar(),
       body: BlocConsumer<SessionCubit, SessionState>(
         listenWhen: (previous, current) =>
             previous.isSignedIn != current.isSignedIn,
@@ -41,52 +57,59 @@ class _SignInScreenState extends State<SignInScreen> {
           }
         },
         builder: (context, state) {
-          return ListView(
-            padding: const EdgeInsets.all(16),
+          return CenteredForm(
+            footer: TextButton(
+              onPressed: () =>
+                  Navigator.pushReplacementNamed(context, '/SignUp'),
+              child: Text(AppLocalizations.of(context).newHereCreateAccount),
+            ),
             children: [
+              AppBrandHeader(
+                subtitle: AppLocalizations.of(context).signInSubtitle,
+              ),
+              const SizedBox(height: AppSpacing.xxxl),
+              // Above the fields, not under the button: the message is about
+              // what was typed, and a reader should not have to scroll past
+              // the thing they just pressed to find out what went wrong.
+              if (state.status == SessionStatus.failure) ...[
+                AlertBanner(AuthFailureText.messageFor(
+                    AppLocalizations.of(context), state.error)),
+                const SizedBox(height: AppSpacing.xl),
+              ],
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).email,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).password,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.xl),
               ElevatedButton(
                 onPressed: state.isBusy ? null : () => _signIn(context),
                 child: state.isBusy
                     ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : const Text('Sign in'),
+                    : Text(AppLocalizations.of(context).signIn),
               ),
-              if (state.status == SessionStatus.failure) ...[
-                const SizedBox(height: 12),
-                AuthFailureText(state.error),
-              ],
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               TextButton(
-                onPressed: () =>
-                    Navigator.pushNamed(context, '/PasswordReset'),
-                child: const Text('I forgot my password'),
-              ),
-              TextButton(
-                onPressed: () =>
-                    Navigator.pushReplacementNamed(context, '/SignUp'),
-                child: const Text('Create an account'),
+                onPressed: () => Navigator.pushNamed(context, '/PasswordReset'),
+                child: Text(AppLocalizations.of(context).forgotPassword),
               ),
             ],
           );

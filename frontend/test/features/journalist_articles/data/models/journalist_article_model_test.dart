@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:news_app_clean_architecture/features/journalist_articles/data/models/journalist_article_model.dart';
 import 'package:news_app_clean_architecture/features/journalist_articles/domain/entities/article_status.dart';
@@ -18,9 +17,9 @@ void main() {
       'thumbnailURL': 'https://storage/media/articles/journalist-1/bus.jpg',
       'status': 'published',
       'viewCount': 12,
-      'publishedAt': Timestamp.fromDate(publishedAt),
-      'createdAt': Timestamp.fromDate(publishedAt),
-      'updatedAt': Timestamp.fromDate(publishedAt),
+      'publishedAt': publishedAt,
+      'createdAt': publishedAt,
+      'updatedAt': publishedAt,
     };
   }
 
@@ -68,7 +67,7 @@ void main() {
   test('writes the full document on create, view count included', () {
     final document = JournalistArticleModel.fromEntity(
       publishableArticle(status: ArticleStatus.published),
-    ).toFirestore();
+    ).toRawData();
 
     expect(document['thumbnailURL'], isNotEmpty);
     expect(document['status'], 'published');
@@ -79,7 +78,7 @@ void main() {
   test('leaves out what an author may not change on update', () {
     final update = JournalistArticleModel.fromEntity(
       publishableArticle(),
-    ).toFirestoreUpdate();
+    ).toRawDataForUpdate();
 
     // The rules reject an update that rewrites any of these, and sending a
     // stale viewCount back would break every edit of a read article.

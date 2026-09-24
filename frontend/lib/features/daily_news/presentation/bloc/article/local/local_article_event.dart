@@ -6,7 +6,7 @@ abstract class LocalArticlesEvent extends Equatable {
   const LocalArticlesEvent();
 
   @override
-  List<Object ?> get props => [];
+  List<Object?> get props => [];
 }
 
 class GetSavedArticles extends LocalArticlesEvent {
@@ -19,7 +19,7 @@ class RemoveArticle extends LocalArticlesEvent {
   const RemoveArticle(this.article);
 
   @override
-  List<Object ?> get props => [article];
+  List<Object?> get props => [article];
 }
 
 class SaveArticle extends LocalArticlesEvent {
@@ -28,5 +28,5 @@ class SaveArticle extends LocalArticlesEvent {
   const SaveArticle(this.article);
 
   @override
-  List<Object ?> get props => [article];
+  List<Object?> get props => [article];
 }

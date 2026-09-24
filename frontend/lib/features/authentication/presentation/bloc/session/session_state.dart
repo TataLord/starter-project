@@ -18,9 +18,9 @@ enum SessionStatus {
 /// app never requires an account (see `docs/DECISIONS.md` decision #31).
 class SessionState extends Equatable {
   final SessionStatus status;
-  final AppUserEntity ? user;
+  final AppUserEntity? user;
   final List<CredentialsValidationError> validationErrors;
-  final Object ? error;
+  final Object? error;
 
   const SessionState({
     this.status = SessionStatus.unknown,
@@ -34,11 +34,11 @@ class SessionState extends Equatable {
   bool get isBusy => status == SessionStatus.busy;
 
   SessionState copyWith({
-    SessionStatus ? status,
-    AppUserEntity ? user,
+    SessionStatus? status,
+    AppUserEntity? user,
     bool clearUser = false,
-    List<CredentialsValidationError> ? validationErrors,
-    Object ? error,
+    List<CredentialsValidationError>? validationErrors,
+    Object? error,
     bool clearError = false,
   }) {
     return SessionState(
@@ -50,5 +50,5 @@ class SessionState extends Equatable {
   }
 
   @override
-  List<Object ?> get props => [status, user, validationErrors, error];
+  List<Object?> get props => [status, user, validationErrors, error];
 }

@@ -9,9 +9,20 @@ class AppUserEntity extends Equatable {
   final String id;
   final String email;
 
-  /// Name shown to readers as the article's author. It falls back to the part
-  /// of the email before the `@` when the person never chose one.
+  /// Name shown to readers as the article's author. It falls back to
+  /// [anonymousName] when the person never chose one.
   final String displayName;
+
+  /// The byline for somebody who did not give a name.
+  ///
+  /// It used to be the part of the email before the `@`, which published a
+  /// piece of somebody's address to every reader — under a field whose whole
+  /// point is that filling it in was optional. Leaving the name blank has to
+  /// mean anonymous, not "we picked one for you".
+  ///
+  /// Not translated: it is stored on the article as the byline, and a name
+  /// that changed with the reader's language would not be a name.
+  static const String anonymousName = 'Anonymous';
 
   const AppUserEntity({
     required this.id,
@@ -20,9 +31,9 @@ class AppUserEntity extends Equatable {
   });
 
   AppUserEntity copyWith({
-    String ? id,
-    String ? email,
-    String ? displayName,
+    String? id,
+    String? email,
+    String? displayName,
   }) {
     return AppUserEntity(
       id: id ?? this.id,
@@ -33,15 +44,11 @@ class AppUserEntity extends Equatable {
 
   /// Name to publish articles under.
   String get authorName {
-    if (displayName.trim().isNotEmpty) {
-      return displayName.trim();
-    }
+    final chosen = displayName.trim();
 
-    final localPart = email.split('@').first;
-
-    return localPart.isEmpty ? email : localPart;
+    return chosen.isEmpty ? anonymousName : chosen;
   }
 
   @override
-  List<Object ?> get props => [id, email, displayName];
+  List<Object?> get props => [id, email, displayName];
 }

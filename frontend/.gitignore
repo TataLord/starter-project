@@ -48,3 +48,6 @@ app.*.map.json
 
 # FVM: the pinned Flutter SDK lives here (.fvmrc records the version and is committed)
 .fvm/
+
+# `flutter test --coverage` output: a build artifact, regenerated on demand
+/coverage/

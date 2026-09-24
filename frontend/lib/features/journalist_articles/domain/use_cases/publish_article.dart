@@ -12,7 +12,8 @@ import '../repository/journalist_article_repository.dart';
 /// incomplete draft is perfectly valid while it stays private, but it must be
 /// complete before it reaches the readers.
 class PublishArticleUseCase
-    implements UseCase<DataState<JournalistArticleEntity>, PublishArticleParams> {
+    implements
+        UseCase<DataState<JournalistArticleEntity>, PublishArticleParams> {
   final JournalistArticleRepository _articleRepository;
 
   const PublishArticleUseCase(this._articleRepository);

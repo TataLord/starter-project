@@ -28,7 +28,7 @@ class JournalistArticleRepositoryInMemoryImpl
   int _generatedIds = 0;
 
   JournalistArticleRepositoryInMemoryImpl({
-    List<JournalistArticleEntity> ? initialArticles,
+    List<JournalistArticleEntity>? initialArticles,
   }) : _articles = List<JournalistArticleEntity>.from(
           initialArticles ?? _seedArticles,
         );
@@ -36,8 +36,8 @@ class JournalistArticleRepositoryInMemoryImpl
   @override
   Future<DataState<List<JournalistArticleEntity>>> getUserArticles({
     required String userId,
-    ArticleStatus ? status,
-    String ? searchQuery,
+    ArticleStatus? status,
+    String? searchQuery,
   }) async {
     await _simulateLatency();
 
@@ -103,6 +103,31 @@ class JournalistArticleRepositoryInMemoryImpl
   }
 
   @override
+  Future<DataState<int>> updateAuthorName({
+    required String userId,
+    required String authorName,
+  }) async {
+    await _simulateLatency();
+
+    var renamed = 0;
+
+    for (var index = 0; index < _articles.length; index++) {
+      final article = _articles[index];
+
+      if (article.userId != userId || article.author == authorName) {
+        continue;
+      }
+
+      // Only the byline moves: `updatedAt` stays where it was, because being
+      // renamed is not an edit.
+      _articles[index] = article.copyWith(author: authorName);
+      renamed++;
+    }
+
+    return DataSuccess(renamed);
+  }
+
+  @override
   Future<DataState<void>> deleteArticle(String articleId) async {
     await _simulateLatency();
 
@@ -118,10 +143,11 @@ class JournalistArticleRepositoryInMemoryImpl
 
   @override
   Future<DataState<List<JournalistArticleEntity>>> getPublishedArticles({
-    int limit = 20,
-    String ? authorId,
-    String ? excludeArticleId,
-    String ? startAfterArticleId,
+    int limit = 10,
+    String? authorId,
+    String? excludeArticleId,
+    String? startAfterArticleId,
+    DateTime? publishedAfter,
   }) async {
     await _simulateLatency();
 
@@ -129,6 +155,7 @@ class JournalistArticleRepositoryInMemoryImpl
         .where((article) => article.isPublished)
         .where((article) => authorId == null || article.userId == authorId)
         .where((article) => article.id != excludeArticleId)
+        .where((article) => _isInsideWindow(article, publishedAfter))
         .toList();
 
     matches.sort(_byMostRecentlyPublishedFirst);
@@ -160,13 +187,28 @@ class JournalistArticleRepositoryInMemoryImpl
     return const DataSuccess(null);
   }
 
+  /// An article with no publication date never passes a time window: it was
+  /// never published, so it has no date to be inside one.
+  bool _isInsideWindow(
+    JournalistArticleEntity article,
+    DateTime? publishedAfter,
+  ) {
+    if (publishedAfter == null) {
+      return true;
+    }
+
+    final publishedAt = article.publishedAt;
+
+    return publishedAt != null && !publishedAt.isBefore(publishedAfter);
+  }
+
   Future<void> _simulateLatency() => Future.delayed(_simulatedLatency);
 
-  int _indexOf(String ? articleId) {
+  int _indexOf(String? articleId) {
     return _articles.indexWhere((article) => article.id == articleId);
   }
 
-  bool _matchesQuery(JournalistArticleEntity article, String ? searchQuery) {
+  bool _matchesQuery(JournalistArticleEntity article, String? searchQuery) {
     if (searchQuery == null || searchQuery.trim().isEmpty) {
       return true;
     }
@@ -236,14 +278,12 @@ class JournalistArticleRepositoryInMemoryImpl
       description:
           'Three lines, one new interchange and a fare system nobody has '
           'explained yet.',
-      content:
-          'The transit authority published a 180 page plan on a Friday '
+      content: 'The transit authority published a 180 page plan on a Friday '
           'afternoon. We read it so you do not have to, and asked the people '
           'who ride the lines every morning what they think of it.',
       author: _seedAuthorName,
       userId: _seedAuthorId,
-      thumbnailUrl:
-          'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957',
       status: ArticleStatus.published,
       publishedAt: DateTime(2026, 9, 12, 7, 0),
       createdAt: DateTime(2026, 9, 11, 21, 40),
@@ -253,8 +293,7 @@ class JournalistArticleRepositoryInMemoryImpl
       id: 'mock-article-seed-3',
       title: 'Interview with the last night bus driver (draft)',
       description: '',
-      content:
-          'Notes from the ride: leaves the depot at 23:40, knows every '
+      content: 'Notes from the ride: leaves the depot at 23:40, knows every '
           'passenger by name. Needs a second interview and photos before this '
           'one can go out.',
       author: _seedAuthorName,

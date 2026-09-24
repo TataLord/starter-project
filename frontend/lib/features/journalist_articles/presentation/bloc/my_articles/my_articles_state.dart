@@ -12,11 +12,11 @@ class MyArticlesState extends Equatable {
   final List<JournalistArticleEntity> articles;
 
   /// When null, drafts and published articles are shown together.
-  final ArticleStatus ? statusFilter;
+  final ArticleStatus? statusFilter;
   final String searchQuery;
 
   /// Failure of the last operation, kept so the screen can report it once.
-  final Object ? error;
+  final Object? error;
 
   const MyArticlesState({
     this.status = MyArticlesStatus.initial,
@@ -28,16 +28,15 @@ class MyArticlesState extends Equatable {
 
   bool get isLoading => status == MyArticlesStatus.loading;
 
-  bool get isEmpty =>
-      status == MyArticlesStatus.success && articles.isEmpty;
+  bool get isEmpty => status == MyArticlesStatus.success && articles.isEmpty;
 
   MyArticlesState copyWith({
-    MyArticlesStatus ? status,
-    List<JournalistArticleEntity> ? articles,
-    ArticleStatus ? statusFilter,
+    MyArticlesStatus? status,
+    List<JournalistArticleEntity>? articles,
+    ArticleStatus? statusFilter,
     bool clearStatusFilter = false,
-    String ? searchQuery,
-    Object ? error,
+    String? searchQuery,
+    Object? error,
     bool clearError = false,
   }) {
     return MyArticlesState(
@@ -51,7 +50,7 @@ class MyArticlesState extends Equatable {
   }
 
   @override
-  List<Object ?> get props => [
+  List<Object?> get props => [
         status,
         articles,
         statusFilter,

@@ -6,7 +6,7 @@ import 'package:news_app_clean_architecture/features/journalist_articles/domain/
 
 /// A stored article that satisfies every publishing rule.
 JournalistArticleEntity publishableArticle({
-  String ? id = 'article-1',
+  String? id = 'article-1',
   ArticleStatus status = ArticleStatus.draft,
 }) {
   return JournalistArticleEntity(

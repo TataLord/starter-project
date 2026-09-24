@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:news_app_clean_architecture/config/theme/design_tokens.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/widgets/alert_banner.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/widgets/app_brand.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/widgets/centered_form.dart';
+import 'package:news_app_clean_architecture/l10n/app_localizations.dart';
+
+import '../../../domain/entities/credentials_rules.dart';
 
 import '../../bloc/session/session_cubit.dart';
 import '../../bloc/session/session_state.dart';
@@ -20,6 +27,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _confirmPasswordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // See SignInScreen: a session failure belongs to the screen that caused
+    // it, and this one starts clean.
+    context.read<SessionCubit>().clearFailure();
+  }
+
+  @override
   void dispose() {
     _displayNameController.dispose();
     _emailController.dispose();
@@ -31,7 +46,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
+      // See SignInScreen: the brand below introduces the screen, so the bar
+      // does not have to repeat the button underneath it.
+      appBar: AppBar(),
       body: BlocConsumer<SessionCubit, SessionState>(
         listenWhen: (previous, current) =>
             previous.isSignedIn != current.isSignedIn,
@@ -41,64 +58,70 @@ class _SignUpScreenState extends State<SignUpScreen> {
           }
         },
         builder: (context, state) {
-          return ListView(
-            padding: const EdgeInsets.all(16),
+          return CenteredForm(
+            footer: TextButton(
+              onPressed: () =>
+                  Navigator.pushReplacementNamed(context, '/SignIn'),
+              child: Text(AppLocalizations.of(context).alreadyHaveAccount),
+            ),
             children: [
+              AppBrandHeader(
+                subtitle: AppLocalizations.of(context).signUpSubtitle,
+                compact: true,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              if (state.status == SessionStatus.failure) ...[
+                AlertBanner(AuthFailureText.messageFor(
+                    AppLocalizations.of(context), state.error)),
+                const SizedBox(height: AppSpacing.xl),
+              ],
               TextField(
                 controller: _displayNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name readers will see (optional)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).displayNameOptional,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).email,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).password,
+                  // Said before they type, not after they fail.
+                  helperText: AppLocalizations.of(context)
+                      .atLeastCharacters(CredentialsRules.passwordMinLength),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Repeat password',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).repeatPassword,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.xl),
               ElevatedButton(
                 onPressed: state.isBusy ? null : () => _signUp(context),
                 child: state.isBusy
                     ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : const Text('Create account'),
-              ),
-              if (state.status == SessionStatus.failure) ...[
-                const SizedBox(height: 12),
-                AuthFailureText(state.error),
-              ],
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () =>
-                    Navigator.pushReplacementNamed(context, '/SignIn'),
-                child: const Text('I already have an account'),
+                    : Text(AppLocalizations.of(context).createAccount),
               ),
             ],
           );

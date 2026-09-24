@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../domain/entities/article_status.dart';
 import '../../domain/entities/journalist_article.dart';
 
@@ -32,26 +30,17 @@ class JournalistArticleModel extends JournalistArticleEntity {
   ) {
     return JournalistArticleModel(
       id: id,
-      title: data['title'] as String ? ?? '',
-      description: data['description'] as String ? ?? '',
-      content: data['content'] as String ? ?? '',
-      author: data['author'] as String ? ?? '',
-      userId: data['userId'] as String ? ?? '',
-      thumbnailUrl: data['thumbnailURL'] as String ? ?? '',
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      content: data['content'] as String? ?? '',
+      author: data['author'] as String? ?? '',
+      userId: data['userId'] as String? ?? '',
+      thumbnailUrl: data['thumbnailURL'] as String? ?? '',
       status: _statusFromRawData(data['status']),
-      viewCount: (data['viewCount'] as num ?)?.toInt() ?? 0,
+      viewCount: (data['viewCount'] as num?)?.toInt() ?? 0,
       publishedAt: _dateFromRawData(data['publishedAt']),
       createdAt: _dateFromRawData(data['createdAt']),
       updatedAt: _dateFromRawData(data['updatedAt']),
-    );
-  }
-
-  factory JournalistArticleModel.fromSnapshot(
-    DocumentSnapshot<Map<String, dynamic>> snapshot,
-  ) {
-    return JournalistArticleModel.fromRawData(
-      snapshot.id,
-      snapshot.data() ?? const <String, dynamic>{},
     );
   }
 
@@ -72,18 +61,23 @@ class JournalistArticleModel extends JournalistArticleEntity {
     );
   }
 
-  /// The document body, without the id: Firestore keeps that in the document
+  /// The document body, without the id: the backend keeps that in the document
   /// key, and `firestore.rules` never looks at an `id` field.
-  Map<String, dynamic> toFirestore() {
+  ///
+  /// Dates leave here as plain [DateTime]s. Turning them into the provider's
+  /// own timestamp type is the data source's job, which is the only place
+  /// allowed to know which provider is behind this (rule 1.2.4).
+  Map<String, dynamic> toRawData() {
     return <String, dynamic>{
-      ...toFirestoreUpdate(),
+      ...toRawDataForUpdate(),
       'userId': userId,
       'viewCount': viewCount,
-      'createdAt': createdAt == null ? null : Timestamp.fromDate(createdAt!),
+      'createdAt': createdAt,
     };
   }
 
-  /// The fields an author may change, for a Firestore `update`.
+  /// The fields an author may change, for an update that writes only the keys
+  /// it names.
   ///
   /// `userId`, `createdAt` and `viewCount` are deliberately left out. An
   /// update only writes the keys it names, so leaving them out means the
@@ -92,7 +86,7 @@ class JournalistArticleModel extends JournalistArticleEntity {
   /// would be writing the count they loaded, and any reader who opened the
   /// article in the meantime would have made it stale, so the rule comparing
   /// it to the stored one would reject the edit.
-  Map<String, dynamic> toFirestoreUpdate() {
+  Map<String, dynamic> toRawDataForUpdate() {
     return <String, dynamic>{
       'title': title,
       'description': description,
@@ -100,9 +94,8 @@ class JournalistArticleModel extends JournalistArticleEntity {
       'author': author,
       'thumbnailURL': thumbnailUrl,
       'status': status.value,
-      'publishedAt':
-          publishedAt == null ? null : Timestamp.fromDate(publishedAt!),
-      'updatedAt': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
+      'publishedAt': publishedAt,
+      'updatedAt': updatedAt,
     };
   }
 
@@ -125,14 +118,17 @@ class JournalistArticleModel extends JournalistArticleEntity {
 
   /// An unknown or missing status is read as a draft: the safe reading, since
   /// a draft is the private one.
-  static ArticleStatus _statusFromRawData(Object ? rawStatus) {
+  static ArticleStatus _statusFromRawData(Object? rawStatus) {
     return ArticleStatus.values.firstWhere(
       (status) => status.value == rawStatus,
       orElse: () => ArticleStatus.draft,
     );
   }
 
-  static DateTime ? _dateFromRawData(Object ? rawDate) {
-    return rawDate is Timestamp ? rawDate.toDate() : null;
+  /// Dates arrive already converted to Dart by the data source, so anything
+  /// else — a missing field, or a provider type that was not translated — is
+  /// read as "no date" rather than crashing the parse.
+  static DateTime? _dateFromRawData(Object? rawDate) {
+    return rawDate is DateTime ? rawDate : null;
   }
 }

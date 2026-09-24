@@ -53,7 +53,7 @@ void main() {
     final result = await uploadThumbnail(
       UploadArticleThumbnailParams(
         userId: 'journalist-1',
-        thumbnail: thumbnail(fileName: 'cover.gif'),
+        thumbnail: thumbnail(fileName: 'cover.bmp'),
       ),
     );
 

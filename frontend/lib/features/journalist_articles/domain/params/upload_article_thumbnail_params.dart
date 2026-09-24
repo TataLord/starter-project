@@ -14,5 +14,5 @@ class UploadArticleThumbnailParams extends Equatable {
   });
 
   @override
-  List<Object ?> get props => [userId, thumbnail];
+  List<Object?> get props => [userId, thumbnail];
 }

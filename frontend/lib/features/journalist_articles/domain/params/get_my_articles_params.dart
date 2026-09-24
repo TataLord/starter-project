@@ -8,10 +8,10 @@ class GetMyArticlesParams extends Equatable {
   final String userId;
 
   /// When null, drafts and published articles are returned together.
-  final ArticleStatus ? status;
+  final ArticleStatus? status;
 
   /// When null or blank, no text filter is applied.
-  final String ? searchQuery;
+  final String? searchQuery;
 
   const GetMyArticlesParams({
     required this.userId,
@@ -20,5 +20,5 @@ class GetMyArticlesParams extends Equatable {
   });
 
   @override
-  List<Object ?> get props => [userId, status, searchQuery];
+  List<Object?> get props => [userId, status, searchQuery];
 }

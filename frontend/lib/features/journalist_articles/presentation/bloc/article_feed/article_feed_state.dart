@@ -15,7 +15,7 @@ class ArticleFeedState extends Equatable {
   final bool hasMore;
 
   /// Failure of the last operation, kept so the screen can report it once.
-  final Object ? error;
+  final Object? error;
 
   const ArticleFeedState({
     this.status = ArticleFeedStatus.initial,
@@ -31,10 +31,10 @@ class ArticleFeedState extends Equatable {
   bool get isEmpty => status == ArticleFeedStatus.success && articles.isEmpty;
 
   ArticleFeedState copyWith({
-    ArticleFeedStatus ? status,
-    List<JournalistArticleEntity> ? articles,
-    bool ? hasMore,
-    Object ? error,
+    ArticleFeedStatus? status,
+    List<JournalistArticleEntity>? articles,
+    bool? hasMore,
+    Object? error,
     bool clearError = false,
   }) {
     return ArticleFeedState(
@@ -46,5 +46,5 @@ class ArticleFeedState extends Equatable {
   }
 
   @override
-  List<Object ?> get props => [status, articles, hasMore, error];
+  List<Object?> get props => [status, articles, hasMore, error];
 }

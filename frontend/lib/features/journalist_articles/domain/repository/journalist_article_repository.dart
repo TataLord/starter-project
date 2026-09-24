@@ -14,8 +14,8 @@ abstract class JournalistArticleRepository {
   /// article of the author is returned.
   Future<DataState<List<JournalistArticleEntity>>> getUserArticles({
     required String userId,
-    ArticleStatus ? status,
-    String ? searchQuery,
+    ArticleStatus? status,
+    String? searchQuery,
   });
 
   /// Single article identified by [articleId].
@@ -28,11 +28,13 @@ abstract class JournalistArticleRepository {
   /// general feed. [excludeArticleId] leaves out the article a reader may
   /// already be looking at. [startAfterArticleId] is the id of the last
   /// article of the previous page, used as a paging cursor.
+  /// [publishedAfter] keeps the feed to a recent window; null means no limit.
   Future<DataState<List<JournalistArticleEntity>>> getPublishedArticles({
-    int limit = 20,
-    String ? authorId,
-    String ? excludeArticleId,
-    String ? startAfterArticleId,
+    int limit = 10,
+    String? authorId,
+    String? excludeArticleId,
+    String? startAfterArticleId,
+    DateTime? publishedAfter,
   });
 
   /// Stores a new article and returns it with the data owned by the backend
@@ -48,6 +50,17 @@ abstract class JournalistArticleRepository {
 
   /// Removes an article permanently.
   Future<DataState<void>> deleteArticle(String articleId);
+
+  /// Rewrites the byline on every article owned by [userId], and answers how
+  /// many were changed.
+  ///
+  /// It is a separate operation from [updateArticle] because it is not an
+  /// edit: only `author` moves, so `updatedAt`, the publication date and the
+  /// view count all stay as they were.
+  Future<DataState<int>> updateAuthorName({
+    required String userId,
+    required String authorName,
+  });
 
   /// Records that a reader opened the article identified by [articleId].
   ///

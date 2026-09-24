@@ -8,6 +8,7 @@ enum CredentialsValidationError {
   passwordRequired,
   passwordTooShort,
   passwordsDoNotMatch,
+  displayNameInvalid,
 }
 
 /// Returned by the use cases when credentials do not satisfy their rules.

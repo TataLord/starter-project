@@ -7,5 +7,5 @@ class IncrementArticleViewCountParams extends Equatable {
   const IncrementArticleViewCountParams(this.articleId);
 
   @override
-  List<Object ?> get props => [articleId];
+  List<Object?> get props => [articleId];
 }

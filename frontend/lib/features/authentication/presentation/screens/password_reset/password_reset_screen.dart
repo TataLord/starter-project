@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:news_app_clean_architecture/config/theme/design_tokens.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/widgets/alert_banner.dart';
+import 'package:news_app_clean_architecture/shared/ui/presentation/widgets/centered_form.dart';
+import 'package:news_app_clean_architecture/l10n/app_localizations.dart';
 
 import '../../bloc/password_reset/password_reset_cubit.dart';
 import '../../bloc/password_reset/password_reset_state.dart';
 import '../../widgets/auth_failure_text.dart';
 
-/// Skeleton of the "forgot my password" screen.
+/// Asking for a password reset, and being told it is on its way.
 ///
 /// One screen, because the reset itself happens on the page Firebase emails a
-/// link to, not in the app (see `docs/DECISIONS.md` decision #32).
+/// link to (see `docs/DECISIONS.md` decision #32).
 class PasswordResetScreen extends StatefulWidget {
   const PasswordResetScreen({super.key});
 
@@ -27,83 +31,132 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reset password')),
-      body: BlocBuilder<PasswordResetCubit, PasswordResetState>(
-        builder: (context, state) {
-          if (state.wasSent) {
-            return const _ResetEmailSentMessage();
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              const Text(
-                'Enter the email you signed up with and we will send you a '
-                'link to choose a new password.',
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
+    return BlocBuilder<PasswordResetCubit, PasswordResetState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            titleSpacing: AppSpacing.xl,
+            toolbarHeight: 72,
+            title: Text(
+              // The title follows what happened: the request is behind them.
+              state.wasSent
+                  ? AppLocalizations.of(context).resetRequested
+                  : AppLocalizations.of(context).resetPassword,
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontSize: 30,
+                  ),
+            ),
+          ),
+          body: state.wasSent
+              ? const _ResetRequested()
+              : _RequestForm(
+                  controller: _emailController,
+                  state: state,
                 ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: state.isSending
-                    ? null
-                    : () => context
-                        .read<PasswordResetCubit>()
-                        .requestReset(_emailController.text),
-                child: state.isSending
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Send reset link'),
-              ),
-              if (state.status == PasswordResetStatus.failure) ...[
-                const SizedBox(height: 12),
-                AuthFailureText(state.error),
-              ],
-            ],
-          );
-        },
-      ),
+        );
+      },
     );
   }
 }
 
-class _ResetEmailSentMessage extends StatelessWidget {
-  const _ResetEmailSentMessage();
+class _RequestForm extends StatelessWidget {
+  final TextEditingController controller;
+  final PasswordResetState state;
+
+  const _RequestForm({required this.controller, required this.state});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.mark_email_read_outlined, size: 48),
-          const SizedBox(height: 16),
-          // Worded so it says nothing about whether that address has an
-          // account: the use case promises not to leak that.
-          const Text(
-            'If that email has an account, a reset link is on its way. '
-            'Open it to choose a new password, then come back and sign in.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Back to sign in'),
-          ),
+    return CenteredForm(
+      children: [
+        if (state.status == PasswordResetStatus.failure) ...[
+          AlertBanner(AuthFailureText.messageFor(
+              AppLocalizations.of(context), state.error)),
+          const SizedBox(height: AppSpacing.xl),
         ],
+        Text(
+          AppLocalizations.of(context).resetInstructions,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.emailAddress,
+          autocorrect: false,
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).email,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        FilledButton(
+          onPressed: state.isSending
+              ? null
+              : () => context
+                  .read<PasswordResetCubit>()
+                  .requestReset(controller.text),
+          child: state.isSending
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(AppLocalizations.of(context).sendResetLink),
+        ),
+      ],
+    );
+  }
+}
+
+class _ResetRequested extends StatelessWidget {
+  const _ResetRequested();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          children: [
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.xxxl),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.mail_outline,
+                size: 44,
+                color: AppColors.accent,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxxl),
+            // Says nothing about whether that address has an account: the use
+            // case promises the app cannot be used to find out who is
+            // registered, and the wording is where that promise is kept.
+            Text(
+              AppLocalizations.of(context).resetSentMessage,
+              style: theme.textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              AppLocalizations.of(context).resetSpamHint,
+              style: theme.textTheme.labelSmall?.copyWith(height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const Spacer(flex: 2),
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLocalizations.of(context).backToSignIn),
+            ),
+          ],
+        ),
       ),
     );
   }

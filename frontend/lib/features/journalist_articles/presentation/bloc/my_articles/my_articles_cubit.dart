@@ -56,7 +56,7 @@ class MyArticlesCubit extends Cubit<MyArticlesState> {
     ));
   }
 
-  Future<void> filterByStatus(ArticleStatus ? status) {
+  Future<void> filterByStatus(ArticleStatus? status) {
     emit(state.copyWith(
       statusFilter: status,
       clearStatusFilter: status == null,

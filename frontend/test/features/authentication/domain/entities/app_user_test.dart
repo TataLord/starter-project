@@ -12,10 +12,10 @@ void main() {
     expect(user.authorName, 'Alex Rivera');
   });
 
-  test('falls back to the email local part when no name was chosen', () {
+  test('publishes anonymously when no name was chosen', () {
     const user = AppUserEntity(id: 'journalist-1', email: 'alex@example.com');
 
-    expect(user.authorName, 'alex');
+    expect(user.authorName, AppUserEntity.anonymousName);
   });
 
   test('ignores a display name that is only whitespace', () {
@@ -25,6 +25,16 @@ void main() {
       displayName: '   ',
     );
 
-    expect(user.authorName, 'alex');
+    expect(user.authorName, AppUserEntity.anonymousName);
+  });
+
+  test('never publishes any part of the email address', () {
+    const user = AppUserEntity(id: 'journalist-1', email: 'alex@example.com');
+
+    // Leaving the optional name blank used to publish "alex" — a piece of
+    // somebody's address, shown to every reader, from a field they were told
+    // they could skip.
+    expect(user.authorName, isNot(contains('alex')));
+    expect(user.authorName, isNot(contains('@')));
   });
 }

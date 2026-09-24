@@ -18,7 +18,8 @@ void main() {
   test('returns the published articles', () async {
     repository.publishedArticlesResult = DataSuccess([publishableArticle()]);
 
-    final result = await getPublishedArticles(const GetPublishedArticlesParams());
+    final result =
+        await getPublishedArticles(const GetPublishedArticlesParams());
 
     expect(result, isA<DataSuccess>());
     expect(result.data, hasLength(1));
@@ -36,5 +37,25 @@ void main() {
     expect(repository.lastPublishedArticlesAuthorId, 'journalist-1');
     expect(repository.lastPublishedArticlesExcludeArticleId, 'article-1');
     expect(repository.lastPublishedArticlesStartAfterArticleId, 'article-0');
+  });
+
+  test('asks for no time window unless one was requested', () async {
+    await getPublishedArticles(const GetPublishedArticlesParams());
+
+    expect(repository.lastPublishedAfter, isNull);
+  });
+
+  test('the recent feed asks for the last week only', () async {
+    final now = DateTime(2026, 9, 22, 12);
+
+    await getPublishedArticles(GetPublishedArticlesParams.recent(now: now));
+
+    expect(repository.lastPublishedAfter, DateTime(2026, 9, 15, 12));
+  });
+
+  test('pages ten articles at a time by default', () async {
+    await getPublishedArticles(const GetPublishedArticlesParams());
+
+    expect(repository.lastPublishedArticlesLimit, 10);
   });
 }

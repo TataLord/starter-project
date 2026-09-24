@@ -1,5 +1,6 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
+import 'package:news_app_clean_architecture/core/resources/network_failure.dart';
+import 'package:news_app_clean_architecture/core/resources/remote_exception.dart';
 
 import '../../domain/entities/article_thumbnail.dart';
 import '../../domain/repository/article_thumbnail_repository.dart';
@@ -23,12 +24,25 @@ class ArticleThumbnailRepositoryImpl implements ArticleThumbnailRepository {
       );
 
       return DataSuccess(downloadUrl);
-    } on FirebaseException catch (error) {
-      return DataFailed(error);
+    } on RemoteException catch (error) {
+      // An upload that could not reach Cloud Storage is worth naming: it is
+      // the one failure the journalist can fix by finding signal.
+      return DataFailed(
+        _connectivityCodes.contains(error.code)
+            ? const NetworkUnavailableException()
+            : error,
+      );
     } catch (error) {
       // An error that escapes here would hang the editor's upload spinner
       // instead of reporting anything.
       return DataFailed(error);
     }
   }
+
+  /// What Cloud Storage calls "I could not reach the server".
+  static const Set<String> _connectivityCodes = {
+    RemoteException.unavailableCode,
+    'retry-limit-exceeded',
+    'network-request-failed',
+  };
 }
